@@ -1,8 +1,10 @@
+import re
 import nltk
 import pickle
 import argparse
 from collections import Counter
-from pycocotools.coco import COCO
+import torchaudio
+from data_loader import get_loader
 
 
 class Vocabulary(object):
@@ -26,13 +28,14 @@ class Vocabulary(object):
     def __len__(self):
         return len(self.word2idx)
 
-def build_vocab(json, threshold):
+def build_vocab(threshold):
     """Build a simple vocabulary wrapper."""
-    coco = COCO(json)
+
+    data_loader = get_loader()
     counter = Counter()
-    ids = coco.anns.keys()
-    for i, id in enumerate(ids):
-        caption = str(coco.anns[id]['caption'])
+
+    for i, (inp, targets) in enumerate(data_loader):
+        caption = targets
         tokens = nltk.tokenize.word_tokenize(caption.lower())
         counter.update(tokens)
 
@@ -55,7 +58,7 @@ def build_vocab(json, threshold):
     return vocab
 
 def main(args):
-    vocab = build_vocab(json=args.caption_path, threshold=args.threshold)
+    vocab = build_vocab(threshold=args.threshold)
     vocab_path = args.vocab_path
     with open(vocab_path, 'wb') as f:
         pickle.dump(vocab, f)
@@ -65,10 +68,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--caption_path', type=str, 
-                        default='data/annotations/captions_train2014.json', 
-                        help='path for train annotation file')
-    parser.add_argument('--vocab_path', type=str, default='./data/vocab.pkl', 
+    parser.add_argument('--vocab_path', type=str, default='~/dataset/vctk/vocab.pkl', 
                         help='path for saving vocabulary wrapper')
     parser.add_argument('--threshold', type=int, default=4, 
                         help='minimum word count threshold')

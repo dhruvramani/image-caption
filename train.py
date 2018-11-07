@@ -4,7 +4,7 @@ import torch.nn as nn
 import numpy as np
 import os
 import pickle
-from data_loader import get_loader 
+from data_loader import * 
 from build_vocab import Vocabulary
 from model import EncoderCNN, DecoderRNN
 from torch.nn.utils.rnn import pack_padded_sequence
@@ -20,6 +20,7 @@ def main(args):
         os.makedirs(args.model_path)
     
     # Image preprocessing, normalization for the pretrained resnet
+    '''
     transform = transforms.Compose([ 
         transforms.RandomCrop(args.crop_size),
         transforms.RandomHorizontalFlip(), 
@@ -27,14 +28,14 @@ def main(args):
         transforms.Normalize((0.485, 0.456, 0.406), 
                              (0.229, 0.224, 0.225))])
     
+    '''
     # Load vocabulary wrapper
     with open(args.vocab_path, 'rb') as f:
         vocab = pickle.load(f)
     
+    set_vocab(vocab)
     # Build data loader
-    data_loader = get_loader(args.image_dir, args.caption_path, vocab, 
-                             transform, args.batch_size,
-                             shuffle=True, num_workers=args.num_workers) 
+    data_loader = get_loader(args.dataset_dir, args.batch_size, shuffle=True, num_workers=args.num_workers) 
 
     # Build the models
     encoder = EncoderCNN(args.embed_size).to(device)
@@ -79,11 +80,10 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', type=str, default='models/' , help='path for saving trained models')
+    parser.add_argument('--model_path', type=str, default='./models/' , help='path for saving trained models')
     parser.add_argument('--crop_size', type=int, default=224 , help='size for randomly cropping images')
-    parser.add_argument('--vocab_path', type=str, default='data/vocab.pkl', help='path for vocabulary wrapper')
-    parser.add_argument('--image_dir', type=str, default='data/resized2014', help='directory for resized images')
-    parser.add_argument('--caption_path', type=str, default='data/annotations/captions_train2014.json', help='path for train annotation json file')
+    parser.add_argument('--vocab_path', type=str, default='~/dataset/vctk/vocab.pkl', help='path for vocabulary wrapper')
+    parser.add_argument('--dataset_dir', type=str, default='~/dataset', help='directory for vctk dataset')
     parser.add_argument('--log_step', type=int , default=10, help='step size for prining log info')
     parser.add_argument('--save_step', type=int , default=1000, help='step size for saving trained models')
     
