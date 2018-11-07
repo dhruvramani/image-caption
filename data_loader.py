@@ -66,9 +66,12 @@ def inp_transform(inp):
     return stft
 
 
-def get_loader(root="~/dataset/", batch_size=100, shuffle=True, num_workers=2):
+def get_loader(root="~/dataset/", batch_size=100, shuffle=True, num_workers=2, transforms=True):
     """Returns torch.utils.data.DataLoader for custom VCTK dataset."""
-    vctk_dataset = torchaudio.datasets.VCTK(root, download=False, transform=inp_transform, target_transform=target_transform)
+    if(transforms):
+        vctk_dataset = torchaudio.datasets.VCTK(root, download=False, transform=inp_transform, target_transform=target_transform)
+    else :
+        vctk_dataset = torchaudio.datasets.VCTK(root, download=False)
     data_loader = torch.utils.data.DataLoader(dataset=vctk_dataset, 
                                               batch_size=batch_size,
                                               shuffle=shuffle,
