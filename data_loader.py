@@ -6,7 +6,6 @@ import pickle
 import numpy as np
 import nltk
 from PIL import Image
-from build_vocab import Vocabulary
 import torchaudio
 from feature import *
 
