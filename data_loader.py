@@ -62,7 +62,7 @@ def inp_transform(inp):
     inp = inp.numpy()
     inp = inp.flatten()
     stft = transform_stft(inp)
-    stf = torch.Tensor(stft)
+    stft = torch.Tensor(stft)
     return stft
 
 
