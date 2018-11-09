@@ -37,13 +37,13 @@ def build_vocab(threshold):
     for i, (inp, targets) in enumerate(data_loader):
         if(type(inp) == int):
             continue
-        print(i, targets, end="\r")
+        print("Target {}".format(i), end="\r")
         caption = targets
         tokens = nltk.tokenize.word_tokenize(str(caption[0]).lower())
         counter.update(tokens)
 
         if (i+1) % 1000 == 0:
-            print("[{}/{}] Tokenized the captions.".format(i+1, len(ids)))
+            print("[{}] Tokenized the captions.".format(i+1))
 
     # If the word frequency is less than 'threshold', then the word is discarded.
     words = [word for word, cnt in counter.items() if cnt >= threshold]
@@ -71,7 +71,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--vocab_path', type=str, default='~/dataset/vctk/vocab.pkl', 
+    parser.add_argument('--vocab_path', type=str, default='/home/nevronas/dataset/vctk/vocab.pkl', 
                         help='path for saving vocabulary wrapper')
     parser.add_argument('--threshold', type=int, default=4, 
                         help='minimum word count threshold')
