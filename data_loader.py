@@ -7,6 +7,7 @@ import numpy as np
 import nltk
 from PIL import Image
 import torchaudio
+from vctk import VCTK
 from feature import *
 
 vocab = None
@@ -69,9 +70,9 @@ def inp_transform(inp):
 def get_loader(root="~/dataset/", batch_size=1, shuffle=True, num_workers=2, transforms=True):
     """Returns torch.utils.data.DataLoader for custom VCTK dataset."""
     if(transforms):
-        vctk_dataset = torchaudio.datasets.VCTK(root, download=False, transform=inp_transform, target_transform=target_transform)
+        vctk_dataset = VCTK(root, download=False, transform=inp_transform, target_transform=target_transform)
         data_loader = torch.utils.data.DataLoader(dataset=vctk_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=collate_fn)
     else :
-        vctk_dataset = torchaudio.datasets.VCTK(root, download=False)
-        data_loader = torch.utils.data.DataLoader(dataset=vctk_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+        vctk_dataset = VCTK(root, download=False)
+        data_loader = torch.utils.data.DataLoader(dataset=vctk_dataset, batch_size=1, shuffle=shuffle, num_workers=1)
     return data_loader

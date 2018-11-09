@@ -50,7 +50,8 @@ def main(args):
     total_step = len(data_loader)
     for epoch in range(args.num_epochs):
         for i, (images, captions, lengths) in enumerate(data_loader):
-            
+            if(images == 0):
+                continue
             # Set mini-batch dataset
             images = images.to(device)
             captions = captions.to(device)
