@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-import torchvision.models as models
+#import torchvision.models as models
+from resnet import resnet34
 from torch.nn.utils.rnn import pack_padded_sequence
 
 
@@ -8,7 +9,7 @@ class EncoderCNN(nn.Module):
     def __init__(self, embed_size):
         """Load the pretrained ResNet-34 and replace top fc layer."""
         super(EncoderCNN, self).__init__()
-        resnet = models.resnet34(pretrained=False)
+        resnet = resnet34(pretrained=False)
         modules = list(resnet.children())[:-1]      # delete the last fc layer.
         self.resnet = nn.Sequential(*modules)
         self.linear = nn.Linear(resnet.fc.in_features, embed_size)
