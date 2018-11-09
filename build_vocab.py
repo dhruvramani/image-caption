@@ -35,9 +35,9 @@ def build_vocab(threshold):
     counter = Counter()
 
     for i, (inp, targets) in enumerate(data_loader):
-        if(inp == 0):
+        if(type(inp) == int):
             continue
-        print(i, end="\r")
+        print(i, targets, end="\r")
         caption = targets
         tokens = nltk.tokenize.word_tokenize(str(caption[0]).lower())
         counter.update(tokens)
