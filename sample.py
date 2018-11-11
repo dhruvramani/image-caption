@@ -8,7 +8,9 @@ from torchvision import transforms
 from build_vocab import Vocabulary
 from model import EncoderCNN, DecoderRNN
 from PIL import Image
-
+from feature import *
+import librosa
+from data_loader import get_loader
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -21,6 +23,19 @@ def load_image(image_path, transform=None):
         image = transform(image).unsqueeze(0)
     
     return image
+
+def load_audio(audio_path):
+    signal, _ = librosa.load(audio_path)
+    return signal
+
+def inp_transform(inp):
+    inp = inp.numpy()
+    inp = inp.flatten()
+    stft = transform_stft(inp)
+    stft = torch.Tensor(stft)
+    stft = stft.unsqueeze(0)
+    stft = stft.unsqueeze(0)
+    return stft
 
 def main(args):
     # Image preprocessing
@@ -44,11 +59,17 @@ def main(args):
     decoder.load_state_dict(torch.load(args.decoder_path))
 
     # Prepare an image
+    '''
     image = load_image(args.image, transform)
     image_tensor = image.to(device)
+    '''
+    data_loader, _ = get_loader(transforms=False)
+    inp, targets = next(iter(data_loader))
+    audio = inp_transform(inp)
+    audio = audio.to(device)
     
     # Generate an caption from the image
-    feature = encoder(image_tensor)
+    feature = encoder(audio)
     sampled_ids = decoder.sample(feature)
     sampled_ids = sampled_ids[0].cpu().numpy()          # (1, max_seq_length) -> (max_seq_length)
     
@@ -62,16 +83,18 @@ def main(args):
     sentence = ' '.join(sampled_caption)
     
     # Print out the image and the generated caption
-    print (sentence)
+    print("Logits : {}\nTarget : {}".format(sentence, targets))
+    '''
     image = Image.open(args.image)
     plt.imshow(np.asarray(image))
+    '''
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--image', type=str, required=True, help='input image for generating caption')
-    parser.add_argument('--encoder_path', type=str, default='models/encoder-2-1000.ckpt', help='path for trained encoder')
-    parser.add_argument('--decoder_path', type=str, default='models/decoder-2-1000.ckpt', help='path for trained decoder')
-    parser.add_argument('--vocab_path', type=str, default='data/vocab.pkl', help='path for vocabulary wrapper')
+    parser.add_argument('--image', type=str, default='/home/nevronas/dataset/IEMOCAP/Session1/dialog/wav/Ses01F_impro01.wav', help='input image for generating caption')
+    parser.add_argument('--encoder_path', type=str, default='models/encoder-20-1000.ckpt', help='path for trained encoder')
+    parser.add_argument('--decoder_path', type=str, default='models/decoder-20-1000.ckpt', help='path for trained decoder')
+    parser.add_argument('--vocab_path', type=str, default='/home/nevronas/dataset/vctk/vocab.pkl', help='path for vocabulary wrapper')
     
     # Model parameters (should be same as paramters in train.py)
     parser.add_argument('--embed_size', type=int , default=256, help='dimension of word embedding vectors')

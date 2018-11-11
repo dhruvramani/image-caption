@@ -31,7 +31,7 @@ class Vocabulary(object):
 def build_vocab(threshold):
     """Build a simple vocabulary wrapper."""
 
-    data_loader = get_loader(transforms=False)
+    data_loader, _ = get_loader(transforms=False)
     counter = Counter()
 
     for i, (inp, targets) in enumerate(data_loader):

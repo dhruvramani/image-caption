@@ -33,6 +33,7 @@ def collate_fn(data):
         lengths: list; valid length for each padded caption.
     """
     # Sort a data list by caption length (descending order).
+    data = list(filter(lambda x: type(x[1]) != int, data))
     data.sort(key=lambda x: len(x[1]), reverse=True)
     images, captions = zip(*data)
 
@@ -64,15 +65,21 @@ def inp_transform(inp):
     inp = inp.flatten()
     stft = transform_stft(inp)
     stft = torch.Tensor(stft)
+    stft = stft.unsqueeze(0)
     return stft
 
 
-def get_loader(root="~/dataset/", batch_size=1, shuffle=True, num_workers=2, transforms=True):
+def get_loader(root="~/dataset/", batch_size=32, shuffle=True, num_workers=2, transforms=True):
     """Returns torch.utils.data.DataLoader for custom VCTK dataset."""
     if(transforms):
         vctk_dataset = VCTK(root, download=False, transform=inp_transform, target_transform=target_transform)
-        data_loader = torch.utils.data.DataLoader(dataset=vctk_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=collate_fn)
+        train_size = int(0.8 * len(vctk_dataset))
+        test_size = len(vctk_dataset) - train_size
+        train_dataset, test_dataset = torch.utils.data.random_split(vctk_dataset, [train_size, test_size])
+        train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=collate_fn)
+        test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=collate_fn)
+        return train_loader, test_loader
     else :
         vctk_dataset = VCTK(root, download=False)
         data_loader = torch.utils.data.DataLoader(dataset=vctk_dataset, batch_size=1, shuffle=shuffle, num_workers=1)
-    return data_loader
+        return data_loader, None

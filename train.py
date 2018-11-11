@@ -35,7 +35,7 @@ def main(args):
     
     set_vocab(vocab)
     # Build data loader
-    data_loader = get_loader(args.dataset_dir, args.batch_size, shuffle=True, num_workers=args.num_workers) 
+    data_loader, test_loader = get_loader(args.dataset_dir, args.batch_size, shuffle=True, num_workers=args.num_workers) 
 
     # Build the models
     encoder = EncoderCNN(args.embed_size).to(device)
@@ -47,30 +47,35 @@ def main(args):
     optimizer = torch.optim.Adam(params, lr=args.learning_rate)
     
     # Train the models
-    total_step = len(data_loader)
+    total_step1 = len(data_loader)
+    total_step2 = len(test_loader)
     for epoch in range(args.num_epochs):
+        print("\nTrain\n")
         for i, (images, captions, lengths) in enumerate(data_loader):
-            if(images == 0):
+            if(type(images) == int):
                 continue
             # Set mini-batch dataset
             images = images.to(device)
             captions = captions.to(device)
             targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
             
-            # Forward, backward and optimize
+            # decoder.zero_grad()
+            # encoder.zero_grad()
+            optimizer.zero_grad()
+
             features = encoder(images)
             outputs = decoder(features, captions, lengths)
-            loss = criterion(outputs, targets)
-            decoder.zero_grad()
-            encoder.zero_grad()
+
+            loss = criterion(outputs,  targets)
+
             loss.backward()
             optimizer.step()
 
-            print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'.format(epoch, args.num_epochs, i, total_step, loss.item()), end="\r") 
+            print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'.format(epoch, args.num_epochs, i, total_step1, loss.item()), end="\r") 
             # Print log info
             if i % args.log_step == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'
-                      .format(epoch, args.num_epochs, i, total_step, loss.item(), np.exp(loss.item()))) 
+                      .format(epoch, args.num_epochs, i, total_step1, loss.item(), np.exp(loss.item()))) 
                 
             # Save the model checkpoints
             if (i+1) % args.save_step == 0:
@@ -78,6 +83,27 @@ def main(args):
                     args.model_path, 'decoder-{}-{}.ckpt'.format(epoch+1, i+1)))
                 torch.save(encoder.state_dict(), os.path.join(
                     args.model_path, 'encoder-{}-{}.ckpt'.format(epoch+1, i+1)))
+
+
+        print("\nTest\n")
+
+        with torch.no_grad():
+            for i, (images, captions, lengths) in enumerate(test_loader):
+                if(type(images) == int):
+                    continue
+
+                images = images.to(device)
+                captions = captions.to(device)
+                targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
+                
+                features = encoder(images)
+                outputs = decoder(features, captions, lengths)
+                loss = criterion(outputs, targets)
+
+                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'.format(epoch, args.num_epochs, i, total_step2, loss.item()), end="\r") 
+                # Print log info
+                if i % args.log_step == 0:
+                    print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch, args.num_epochs, i, total_step2, loss.item(), np.exp(loss.item()))) 
 
 
 if __name__ == '__main__':
@@ -94,8 +120,8 @@ if __name__ == '__main__':
     parser.add_argument('--hidden_size', type=int , default=512, help='dimension of lstm hidden states')
     parser.add_argument('--num_layers', type=int , default=1, help='number of layers in lstm')
     
-    parser.add_argument('--num_epochs', type=int, default=5)
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--num_epochs', type=int, default=20)
+    parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--num_workers', type=int, default=2)
     parser.add_argument('--learning_rate', type=float, default=0.001)
     args = parser.parse_args()
